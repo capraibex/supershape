@@ -84,6 +84,7 @@ function init() {
 
     // orbit controls
     controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableKeys = false;
 
     // create & init GUI
     gui = new dat.GUI();
