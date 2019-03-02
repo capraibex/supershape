@@ -12,6 +12,10 @@ let guiController = new function() {
     this.flatshading = false;
     this.autorotate = false;
     this.lockcontrols = false;
+    this.screenshot = () => takeScreenshot();
+    this.exportOBJ = () => exportOBJ();
+    this.exportPLY = () => exportPLY();
+    this.exportGLTF = () => exportGLTF();
     this.randomshape = () => generateRandomShape();
     this.r1 = 1;
     this.a1 = 1;
@@ -27,7 +31,7 @@ let guiController = new function() {
     this.n12 = 0.2;
     this.n22 = 1.7;
     this.n32 = 1.7;
-}
+};
 
 init();
 animate();
@@ -74,7 +78,7 @@ function init() {
     // scene.add(new THREE.AxesHelper(20));
     
     // renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 	renderer.setSize(window.innerWidth, window.innerHeight+3);
     document.body.appendChild(renderer.domElement);
 
@@ -135,6 +139,11 @@ function initGui() {
         updateGuiControls();
         redraw();
     });
+    f0 = gui.addFolder('Export');
+    f0.add(guiController, 'screenshot').name('as .png');
+    f0.add(guiController, 'exportOBJ').name('as .obj');
+    f0.add(guiController, 'exportPLY').name('as .ply');
+    f0.add(guiController, 'exportGLTF').name('as .gltf');
     gui.add(guiController, 'randomshape').name('Random Shape');
     f1 = gui.addFolder('Control 1');
     f1.add(guiController, 'r1', 1, 10).onChange(redraw);
@@ -262,4 +271,37 @@ function createIndexedVertexArray() {
 
 function supershape(theta, a, b, m, n1, n2, n3) {
     return Math.pow(Math.pow(Math.abs((1/a)*Math.cos(m * theta * 0.25)), n2) + Math.pow(Math.abs((1/b)*Math.sin(m * theta * 0.25)), n3), -1/n1);
+}
+
+function takeScreenshot() {
+    downloadFile(renderer.domElement.toDataURL(), 'screenshot.png')
+}
+
+function exportPLY() {
+    let exporter = new THREE.PLYExporter();
+    let data = exporter.parse(scene);
+    downloadFile(URL.createObjectURL(new Blob([data], { type: 'text/plain' })), 'shape.ply');
+}
+
+function exportOBJ() {
+    let exporter = new THREE.OBJExporter();
+    let data = exporter.parse(scene);
+    downloadFile(URL.createObjectURL(new Blob([data], { type: 'text/plain' })), 'shape.obj');
+}
+
+function exportGLTF() {
+    var exporter = new THREE.GLTFExporter();
+    exporter.parse(scene, function (data) {
+        downloadFile(URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' })), 'shape.gltf');
+    });
+}
+
+function downloadFile(data, filename) {
+    let a = document.createElement('a');
+    a.setAttribute('type', 'hidden');
+    a.href = data;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 }
