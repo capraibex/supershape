@@ -85,6 +85,8 @@ function init() {
     // orbit controls
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableKeys = false;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
 
     // create & init GUI
     gui = new dat.GUI();
@@ -102,7 +104,8 @@ function animate() {
         points.rotation.y += 0.01;
     }
 
-	renderer.render(scene, camera);
+    renderer.render(scene, camera);
+    controls.update();
 }
 
 function initGui() {
