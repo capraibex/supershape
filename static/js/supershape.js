@@ -58,7 +58,7 @@ function init() {
     geometry.computeVertexNormals();
 
     // material
-    material = new THREE.MeshPhongMaterial({ color: 0x003e2c, specular: 0xffffff, shininess: 3, flatShading: guiController.flatshading });
+    material = new THREE.MeshPhongMaterial({ color: guiController.color, specular: 0xffffff, shininess: 3, flatShading: guiController.flatshading });
 
     // mesh
     mesh = new THREE.Mesh(geometry, material);
