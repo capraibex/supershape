@@ -10,6 +10,7 @@ let guiController = new function() {
     this.wireframe = false;
     this.flatshading = false;
     this.autorotate = false;
+    this.lockcontrols = false;
     this.r1 = 1;
     this.a1 = 1;
     this.b1 = 1;
@@ -105,6 +106,12 @@ function initGui() {
         material.flatShading = guiController.flatshading;
     });
     gui.add(guiController, 'autorotate', false);
+    gui.add(guiController, 'lockcontrols', false).name('Sync Controls').onChange(() => {
+        f1.name = guiController.lockcontrols ? 'Control 1 = Control 2' : 'Control 1';
+        f2.domElement.style.display = guiController.lockcontrols ? 'none' : '';
+        updateGuiControls();
+        redraw();
+    });
     f1 = gui.addFolder('Control 1');
     f1.add(guiController, 'r1', 1, 10).onChange(redraw);
     f1.add(guiController, 'a1', 0, 2, 0.01).onChange(redraw);
@@ -125,7 +132,30 @@ function initGui() {
     f2.open();
 }
 
+function updateGuiControls() {
+    guiController.r2 = guiController.r1;
+    guiController.a2 = guiController.a1;
+    guiController.b2 = guiController.b1;
+    guiController.m2 = guiController.m1;
+    guiController.n12 = guiController.n11;
+    guiController.n22 = guiController.n21;
+    guiController.n32 = guiController.n31;
+    updateDisplay(gui);
+}
+
+function updateDisplay(g) {
+    for (var i in g.__controllers) {
+        g.__controllers[i].updateDisplay();
+    }
+    for (var f in g.__folders) {
+        updateDisplay(g.__folders[f]);
+    }
+}
+
 function redraw() {
+    if (guiController.lockcontrols)
+        updateGuiControls();
+    
     saveShapeVertices();
     geometry = new THREE.BufferGeometry();
     geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
