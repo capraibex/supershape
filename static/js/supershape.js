@@ -41,7 +41,7 @@ function init() {
     scene = new THREE.Scene();
 
     // camera
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 100000 );
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 100000);
     camera.position.set(-2, 2, 2);
     
     // ambient light
@@ -113,13 +113,13 @@ function initGui() {
         material.setValues({color: guiController.color});
         pmaterial.setValues({color: guiController.color});
     });
-    gui.add(guiController, 'detail', 10, 300, 1).onChange(d => {
+    gui.add(guiController, 'detail', 10, 300, 1).onChange(() => {
         globe = new Array(guiController.detail+1);
         for(i=0; i<guiController.detail+1; i++)
             globe[i] = new Array(guiController.detail+1);
         redraw();
     });
-    gui.add(guiController, 'wireframe', false).onChange(d => material.wireframe = guiController.wireframe);
+    gui.add(guiController, 'wireframe', false).onChange(() => material.wireframe = guiController.wireframe);
     gui.add(guiController, 'pointcloud', false).onChange(() => {
         material.needsUpdate = true;
         if (guiController.pointcloud) {
@@ -278,7 +278,7 @@ function supershape(theta, a, b, m, n1, n2, n3) {
 }
 
 function takeScreenshot() {
-    downloadFile(renderer.domElement.toDataURL(), 'screenshot.png')
+    downloadFile(renderer.domElement.toDataURL(), 'screenshot.png');
 }
 
 function exportPLY() {
