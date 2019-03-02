@@ -11,6 +11,7 @@ let guiController = new function() {
     this.flatshading = false;
     this.autorotate = false;
     this.lockcontrols = false;
+    this.randomshape = () => generateRandomShape();
     this.r1 = 1;
     this.a1 = 1;
     this.b1 = 1;
@@ -112,6 +113,7 @@ function initGui() {
         updateGuiControls();
         redraw();
     });
+    gui.add(guiController, 'randomshape').name('Random Shape');
     f1 = gui.addFolder('Control 1');
     f1.add(guiController, 'r1', 1, 10).onChange(redraw);
     f1.add(guiController, 'a1', 0, 2, 0.01).onChange(redraw);
@@ -141,6 +143,25 @@ function updateGuiControls() {
     guiController.n22 = guiController.n21;
     guiController.n32 = guiController.n31;
     updateDisplay(gui);
+}
+
+function generateRandomShape() {
+    guiController.r1 = THREE.Math.randFloat(0, 3);
+    guiController.a1 = THREE.Math.randFloat(0, 2);
+    guiController.b1 = THREE.Math.randFloat(0, 2);
+    guiController.m1 = THREE.Math.randFloat(0, 20);
+    guiController.n11 = THREE.Math.randFloat(0.1, 1000);
+    guiController.n21 = THREE.Math.randFloat(-500, 500);
+    guiController.n31 = THREE.Math.randFloat(-500, 500);
+    guiController.r2 = THREE.Math.randFloat(0, 3);
+    guiController.a2 = THREE.Math.randFloat(0, 2);
+    guiController.b2 = THREE.Math.randFloat(0, 2);
+    guiController.m2 = THREE.Math.randFloat(0, 20);
+    guiController.n12 = THREE.Math.randFloat(0.1, 1000);
+    guiController.n22 = THREE.Math.randFloat(-500, 500);
+    guiController.n32 = THREE.Math.randFloat(-500, 500);
+    updateDisplay(gui);
+    redraw();
 }
 
 function updateDisplay(g) {
