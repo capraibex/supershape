@@ -37,8 +37,6 @@ function init() {
     light.position.set(0, 1, 0);
     scene.add(light);
 
-    // scene.add( new THREE.AxesHelper( 20 ) );
-    
     // geometry
     globe = new Array(guiController.detail+1);
     for(i=0; i<guiController.detail+1; i++)
@@ -46,15 +44,20 @@ function init() {
     
     saveShapeVertices();
     geometry = new THREE.BufferGeometry();
-    geometry.addAttribute('position', new THREE.BufferAttribute(createVertexArray(), 3));
+    geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
+    geometry.computeVertexNormals();
 
     // material
-    material = new THREE.MeshPhongMaterial({ color: 0x003e2c, specular: 0xffffff, shininess: 3, flatShading: THREE.SmoothShading });
+    material = new THREE.MeshPhongMaterial({ color: 0x003e2c, specular: 0xffffff, shininess: 3, flatShading: false });
 
     // mesh
     mesh = new THREE.Mesh(geometry, material);
     mesh.drawMode = THREE.TriangleStripDrawMode;
     scene.add(mesh);
+
+    // helper
+    // scene.add(new THREE.VertexNormalsHelper(mesh, 0.1, 0x00ff00, 1));
+    // scene.add(new THREE.AxesHelper(20));
     
     // renderer
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -102,7 +105,8 @@ function initGui() {
 function redraw() {
     saveShapeVertices();
     geometry = new THREE.BufferGeometry();
-    geometry.addAttribute('position', new THREE.BufferAttribute(createVertexArray(), 3));
+    geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
+    geometry.computeVertexNormals();
     mesh.geometry = geometry;
 }
 
@@ -116,22 +120,46 @@ function saveShapeVertices() {
             let x = guiController.r * r1 * Math.cos(lon) * r2 * Math.cos(lat);
             let y = guiController.r * r1 * Math.sin(lon) * r2 * Math.cos(lat);
             let z = guiController.r * r2 * Math.sin(lat);
-            globe[i][j] = new THREE.Vector3(x, y, z);
+            globe[i][j] = new THREE.Vector4(x, y, z, null);
         }
     }
 }
 
-function createVertexArray() {
+function createIndexedVertexArray() {
     vertices = [];
+    indices = [];
+    index = 0;
     for (i = 0; i < guiController.detail; i++) {
-        for (j = 0; j < guiController.detail+1; j++) {
-            let v1 = globe[i][j];
-            let v2 = globe[i+1][j];
-            vertices.push(v2.x, v2.y, v2.z);
-            vertices.push(v1.x, v1.y, v1.z); 
+        for (j = 0; j < guiController.detail; j++) {
+            /*  
+                add vertices for two triangles in following order
+                0---1
+                | / |
+                2---3
+            */
+            for (oi = 0; oi <= 1; oi++) {
+                for (oj = 0; oj <= 1; oj++) {
+                    let v = globe[i+oi][j+oj];
+                    if (v.w == null) {
+                        vertices.push(v.x, v.y, v.z);
+                        v.w = index;
+                        indices.push(index++);
+                    }
+                    else {
+                        indices.push(v.w);
+                    }
+                }
+            }
+            indices.push(globe[i+1][j].w);
+            indices.push(globe[i][j+1].w);
         }
     }
-    return new Float32Array(vertices);
+    
+    let arrayConstructor = (indices.length >= Math.pow(2, 16)) ? Uint32Array : (indices.length >= Math.pow(2, 8)) ? Uint16Array : Uint8Array;
+    geometry.setIndex(new THREE.BufferAttribute(new arrayConstructor(indices), 1))
+    geometry.attributes.normal = undefined;
+
+    return vertices;
 }
 
 function supershape(theta, a, b, m, n1, n2, n3) {
