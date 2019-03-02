@@ -6,7 +6,7 @@ let camera, scene, controls, renderer, geometry, material, pmaterial, mesh, poin
 let gui, f1, f2;
 let guiController = new function() {
     this.color = "#003e2c";
-    this.detail = 300;
+    this.detail = 200;
     this.wireframe = false;
     this.pointcloud = false;
     this.flatshading = false;
@@ -113,7 +113,7 @@ function initGui() {
         material.setValues({color: guiController.color});
         pmaterial.setValues({color: guiController.color});
     });
-    gui.add(guiController, 'detail', 10, 500, 1).onChange(d => {
+    gui.add(guiController, 'detail', 10, 300, 1).onChange(d => {
         globe = new Array(guiController.detail+1);
         for(i=0; i<guiController.detail+1; i++)
             globe[i] = new Array(guiController.detail+1);
