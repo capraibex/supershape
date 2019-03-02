@@ -1,13 +1,14 @@
 let HALF_PI = Math.PI * 0.5;
 
 let globe;
-let camera, scene, controls, renderer, geometry, material, mesh;
+let camera, scene, controls, renderer, geometry, material, pmaterial, mesh, points;
 
 let gui, f1, f2;
 let guiController = new function() {
     this.color = "#003e2c";
     this.detail = 300;
     this.wireframe = false;
+    this.pointcloud = false;
     this.flatshading = false;
     this.autorotate = false;
     this.lockcontrols = false;
@@ -49,7 +50,7 @@ function init() {
 
     // geometry
     globe = new Array(guiController.detail+1);
-    for(i=0; i<guiController.detail+1; i++)
+    for (i=0; i<guiController.detail+1; i++)
         globe[i] = new Array(guiController.detail+1);
     
     saveShapeVertices();
@@ -57,13 +58,16 @@ function init() {
     geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
     geometry.computeVertexNormals();
 
-    // material
+    // materials
     material = new THREE.MeshPhongMaterial({ color: guiController.color, specular: 0xffffff, shininess: 3, flatShading: guiController.flatshading });
+    pmaterial = new THREE.PointsMaterial({ color: guiController.color, size: 2, sizeAttenuation: false });
 
     // mesh
     mesh = new THREE.Mesh(geometry, material);
-    mesh.drawMode = THREE.TriangleStripDrawMode;
     scene.add(mesh);
+
+    // points
+    points = new THREE.Points(geometry, pmaterial);
 
     // helper
     // scene.add(new THREE.VertexNormalsHelper(mesh, 0.1, 0x00ff00, 1));
@@ -88,13 +92,19 @@ function animate() {
     if (guiController.autorotate) {
         mesh.rotation.x += 0.01;
         mesh.rotation.y += 0.01;
+
+        points.rotation.x += 0.01;
+        points.rotation.y += 0.01;
     }
 
 	renderer.render(scene, camera);
 }
 
 function initGui() {
-    gui.addColor(guiController, 'color').onChange(d => material.setValues({color: guiController.color}));
+    gui.addColor(guiController, 'color').onChange(() => {
+        material.setValues({color: guiController.color});
+        pmaterial.setValues({color: guiController.color});
+    });
     gui.add(guiController, 'detail', 10, 500, 1).onChange(d => {
         globe = new Array(guiController.detail+1);
         for(i=0; i<guiController.detail+1; i++)
@@ -102,6 +112,18 @@ function initGui() {
         redraw();
     });
     gui.add(guiController, 'wireframe', false).onChange(d => material.wireframe = guiController.wireframe);
+    gui.add(guiController, 'pointcloud', false).onChange(() => {
+        material.needsUpdate = true;
+        if (guiController.pointcloud) {
+            scene.remove(mesh);
+            scene.add(points);
+        }
+        else {
+            scene.remove(points);
+            scene.add(mesh);
+        }
+        redraw();
+    });
     gui.add(guiController, 'flatshading', false).onChange(() => { 
         material.needsUpdate = true;
         material.flatShading = guiController.flatshading;
@@ -178,10 +200,12 @@ function redraw() {
         updateGuiControls();
     
     saveShapeVertices();
-    geometry = new THREE.BufferGeometry();
     geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
     geometry.computeVertexNormals();
-    mesh.geometry = geometry;
+    if (guiController.pointcloud)
+        points.geometry = geometry;
+    else
+        mesh.geometry = geometry;
 }
 
 function saveShapeVertices() {
