@@ -3,21 +3,28 @@ let HALF_PI = Math.PI * 0.5;
 let globe;
 let camera, scene, controls, renderer, geometry, material, mesh;
 
-let gui;
+let gui, f1, f2;
 let guiController = new function() {
     this.color = "#003e2c";
     this.detail = 300;
     this.wireframe = false;
     this.flatshading = false;
     this.autorotate = false;
-    this.r = 1;
-    this.a = 1;
-    this.b = 1;
-    this.m = 7
-    this.n1 = 0.2;
-    this.n2 = 1.7;
-    this.n3 = 1.7;
-};
+    this.r1 = 1;
+    this.a1 = 1;
+    this.b1 = 1;
+    this.m1 = 7
+    this.n11 = 0.2;
+    this.n21 = 1.7;
+    this.n31 = 1.7;
+    this.r2 = 1;
+    this.a2 = 1;
+    this.b2 = 1;
+    this.m2 = 7
+    this.n12 = 0.2;
+    this.n22 = 1.7;
+    this.n32 = 1.7;
+}
 
 init();
 animate();
@@ -98,13 +105,24 @@ function initGui() {
         material.flatShading = guiController.flatshading;
     });
     gui.add(guiController, 'autorotate', false);
-    gui.add(guiController, 'r', 1, 10).onChange(redraw);
-    gui.add(guiController, 'a', 0, 2, 0.01).onChange(redraw);
-    gui.add(guiController, 'b', 0, 2, 0.01).onChange(redraw);
-    gui.add(guiController, 'm', 0, 100).onChange(redraw);
-    gui.add(guiController, 'n1', 0.1, 10).onChange(redraw);
-    gui.add(guiController, 'n2', 0, 5).onChange(redraw);
-    gui.add(guiController, 'n3', 0, 5).onChange(redraw);
+    f1 = gui.addFolder('Control 1');
+    f1.add(guiController, 'r1', 1, 10).onChange(redraw);
+    f1.add(guiController, 'a1', 0, 2, 0.01).onChange(redraw);
+    f1.add(guiController, 'b1', 0, 2, 0.01).onChange(redraw);
+    f1.add(guiController, 'm1', 0, 20).onChange(redraw);
+    f1.add(guiController, 'n11', 0.1, 10).onChange(redraw);
+    f1.add(guiController, 'n21', -5, 5).onChange(redraw);
+    f1.add(guiController, 'n31', -5, 5).onChange(redraw);
+    f1.open();
+    f2 = gui.addFolder('Control 2');
+    f2.add(guiController, 'r2', 1, 10).onChange(redraw);
+    f2.add(guiController, 'a2', 0, 2, 0.01).onChange(redraw);
+    f2.add(guiController, 'b2', 0, 2, 0.01).onChange(redraw);
+    f2.add(guiController, 'm2', 0, 20).onChange(redraw);
+    f2.add(guiController, 'n12', 0.1, 10).onChange(redraw);
+    f2.add(guiController, 'n22', -5, 5).onChange(redraw);
+    f2.add(guiController, 'n32', -5, 5).onChange(redraw);
+    f2.open();
 }
 
 function redraw() {
@@ -118,13 +136,13 @@ function redraw() {
 function saveShapeVertices() {
     for (i = 0; i < guiController.detail+1; i++) {
         let lat = THREE.Math.mapLinear(i, 0, guiController.detail, -HALF_PI, HALF_PI);
-        let  r2 = supershape(lat, guiController.a, guiController.b, guiController.m, guiController.n1, guiController.n2, guiController.n3);
+        let  r2 = supershape(lat, guiController.a2, guiController.b2, guiController.m2, guiController.n12, guiController.n22, guiController.n32);
         for (j = 0; j < guiController.detail+1; j++) {
             let lon = THREE.Math.mapLinear(j, 0, guiController.detail, -Math.PI, Math.PI);
-            let r1 = supershape(lon, guiController.a, guiController.b, guiController.m, guiController.n1, guiController.n2, guiController.n3);
-            let x = guiController.r * r1 * Math.cos(lon) * r2 * Math.cos(lat);
-            let y = guiController.r * r1 * Math.sin(lon) * r2 * Math.cos(lat);
-            let z = guiController.r * r2 * Math.sin(lat);
+            let r1 = supershape(lon, guiController.a1, guiController.b1, guiController.m1, guiController.n11, guiController.n21, guiController.n31);
+            let x = guiController.r1 * r1 * Math.cos(lon) * guiController.r2 * r2 * Math.cos(lat);
+            let y = guiController.r1 * r1 * Math.sin(lon) * guiController.r2 * r2 * Math.cos(lat);
+            let z = guiController.r2 * r2 * Math.sin(lat);
             globe[i][j] = new THREE.Vector4(x, y, z, null);
         }
     }
