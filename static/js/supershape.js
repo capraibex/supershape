@@ -8,6 +8,7 @@ let guiController = new function() {
     this.color = "#003e2c";
     this.detail = 300;
     this.wireframe = false;
+    this.flatshading = false;
     this.autorotate = false;
     this.r = 1;
     this.a = 1;
@@ -48,7 +49,7 @@ function init() {
     geometry.computeVertexNormals();
 
     // material
-    material = new THREE.MeshPhongMaterial({ color: 0x003e2c, specular: 0xffffff, shininess: 3, flatShading: false });
+    material = new THREE.MeshPhongMaterial({ color: 0x003e2c, specular: 0xffffff, shininess: 3, flatShading: guiController.flatshading });
 
     // mesh
     mesh = new THREE.Mesh(geometry, material);
@@ -92,6 +93,10 @@ function initGui() {
         redraw();
     });
     gui.add(guiController, 'wireframe', false).onChange(d => material.wireframe = guiController.wireframe);
+    gui.add(guiController, 'flatshading', false).onChange(() => { 
+        material.needsUpdate = true;
+        material.flatShading = guiController.flatshading;
+    });
     gui.add(guiController, 'autorotate', false);
     gui.add(guiController, 'r', 1, 10).onChange(redraw);
     gui.add(guiController, 'a', 0, 2, 0.01).onChange(redraw);
