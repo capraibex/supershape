@@ -5,6 +5,7 @@ let camera, scene, controls, renderer, geometry, material, pmaterial, lmaterial,
 
 let gui, f1, f2;
 let guiController = new function() {
+    this.bgcolor = "#000000";
     this.color = "#003e2c";
     this.detail = 200;
     this.wireframe = false;
@@ -114,6 +115,9 @@ function animate() {
 }
 
 function initGui() {
+    gui.addColor(guiController, 'bgcolor').onChange(() => {
+        scene.background = new THREE.Color(guiController.bgcolor);
+    });
     gui.addColor(guiController, 'color').onChange(() => {
         material.setValues({color: guiController.color});
         pmaterial.setValues({color: guiController.color});
