@@ -1,7 +1,7 @@
 let HALF_PI = Math.PI * 0.5;
 
 let globe;
-let camera, scene, controls, renderer, geometry, material, pmaterial, mesh, points;
+let camera, scene, controls, renderer, geometry, material, pmaterial, lmaterial, mesh, points, line;
 
 let gui, f1, f2;
 let guiController = new function() {
@@ -12,6 +12,7 @@ let guiController = new function() {
     this.flatshading = false;
     this.autorotate = false;
     this.lockcontrols = false;
+    this._2d = false;
     this.screenshot = () => takeScreenshot();
     this.exportOBJ = () => exportOBJ();
     this.exportPLY = () => exportPLY();
@@ -65,6 +66,7 @@ function init() {
     // materials
     material = new THREE.MeshPhongMaterial({ color: guiController.color, specular: 0xffffff, shininess: 3, flatShading: guiController.flatshading });
     pmaterial = new THREE.PointsMaterial({ color: guiController.color, size: 2, sizeAttenuation: false });
+    lmaterial = new THREE.LineBasicMaterial({ color: guiController.color, size: 2 });
 
     // mesh
     mesh = new THREE.Mesh(geometry, material);
@@ -72,6 +74,9 @@ function init() {
 
     // points
     points = new THREE.Points(geometry, pmaterial);
+
+    // line
+    line = new THREE.Line(geometry, lmaterial);
 
     // helper
     // scene.add(new THREE.VertexNormalsHelper(mesh, 0.1, 0x00ff00, 1));
@@ -112,6 +117,7 @@ function initGui() {
     gui.addColor(guiController, 'color').onChange(() => {
         material.setValues({color: guiController.color});
         pmaterial.setValues({color: guiController.color});
+        lmaterial.setValues({color: guiController.color});
     });
     gui.add(guiController, 'detail', 10, 300, 1).onChange(() => {
         globe = new Array(guiController.detail+1);
@@ -123,12 +129,12 @@ function initGui() {
     gui.add(guiController, 'pointcloud', false).onChange(() => {
         material.needsUpdate = true;
         if (guiController.pointcloud) {
-            scene.remove(mesh);
+            guiController._2d ? scene.remove(line) : scene.remove(mesh);
             scene.add(points);
         }
         else {
             scene.remove(points);
-            scene.add(mesh);
+            guiController._2d ? scene.add(line) : scene.add(mesh);
         }
         redraw();
     });
@@ -142,6 +148,26 @@ function initGui() {
         f2.domElement.style.display = guiController.lockcontrols ? 'none' : '';
         updateGuiControls();
         redraw();
+    });
+    gui.add(guiController, '_2d', false).name('2D Mode').onChange(() => {
+        material.needsUpdate = true;
+        guiController._2d ? camera.position.set(0, 0, 2) : null;//camera.position.set(-2, 2, 2);
+        controls.enableRotate = !guiController._2d;
+        guiController.lockcontrols = guiController._2d;
+        f1.name = guiController.lockcontrols ? 'Controls' : 'Control 1';
+        f2.domElement.style.display = guiController.lockcontrols ? 'none' : '';
+        updateGuiControls();
+        
+        if (guiController._2d) {
+            scene.remove(mesh);
+            scene.add(line);
+            redraw2d();
+        }
+        else {
+            scene.remove(line);
+            scene.add(mesh);
+            redraw();
+        }
     });
     f0 = gui.addFolder('Export');
     f0.add(guiController, 'screenshot').name('as .png');
@@ -212,6 +238,11 @@ function redraw() {
     if (guiController.lockcontrols)
         updateGuiControls();
     
+    if (guiController._2d) {
+        redraw2d();
+        return;
+    }
+    
     saveShapeVertices();
     geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray(), 3));
     geometry.computeVertexNormals();
@@ -219,6 +250,16 @@ function redraw() {
         points.geometry = geometry;
     else
         mesh.geometry = geometry;
+}
+
+function redraw2d() {
+    saveShapeVertices2d();
+    geometry.addAttribute('position', new THREE.Float32BufferAttribute(createIndexedVertexArray2d(), 2));
+    
+    if (guiController.pointcloud)
+        points.geometry = geometry;
+    else
+        line.geometry = geometry;
 }
 
 function saveShapeVertices() {
@@ -233,6 +274,16 @@ function saveShapeVertices() {
             let z = guiController.r2 * r2 * Math.sin(lat);
             globe[i][j] = new THREE.Vector4(x, y, z, null);
         }
+    }
+}
+
+function saveShapeVertices2d() {
+    for (i = 0; i < guiController.detail; i++) {
+        let theta = THREE.Math.mapLinear(i, 0, guiController.detail, -Math.PI, Math.PI);
+        let r = supershape(theta, guiController.a1, guiController.b1, guiController.m1, guiController.n11, guiController.n21, guiController.n31);
+        let x = guiController.r1 * r * Math.cos(theta);
+        let y = guiController.r1 * r * Math.sin(theta);
+        globe[i][0] = new THREE.Vector2(x, y);
     }
 }
 
@@ -269,6 +320,22 @@ function createIndexedVertexArray() {
     let arrayConstructor = (indices.length >= Math.pow(2, 16)) ? Uint32Array : (indices.length >= Math.pow(2, 8)) ? Uint16Array : Uint8Array;
     geometry.setIndex(new THREE.BufferAttribute(new arrayConstructor(indices), 1))
     geometry.attributes.normal = undefined;
+
+    return vertices;
+}
+
+function createIndexedVertexArray2d() {
+    vertices = [];
+    indices = [];
+    for (i = 0; i < guiController.detail; i++) {
+        let v = globe[i][0];
+        vertices.push(v.x, v.y);
+        indices.push(i);
+    }
+    indices.push(0);
+
+    let arrayConstructor = (indices.length >= Math.pow(2, 16)) ? Uint32Array : (indices.length >= Math.pow(2, 8)) ? Uint16Array : Uint8Array;
+    geometry.setIndex(new THREE.BufferAttribute(new arrayConstructor(indices), 1));
 
     return vertices;
 }
